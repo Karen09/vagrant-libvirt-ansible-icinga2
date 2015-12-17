@@ -1,0 +1,17 @@
+---
+- name: icinga2 repo
+  command: curl -o /etc/yum.repos.d/ICINGA-release.repo http://packages.icinga.org/epel/ICINGA-release.repo
+
+- name: install icinga2
+  yum: pkg={{item}} state=latest
+  with_items:
+  - icinga2
+  - epel-release
+
+- name: install nag-plugins
+  yum: pkg={{item}} state=latest
+  with_items:
+  - nagios-plugins-all
+
+- name: Ensure icinga running
+  service: name=icinga2 state=started enabled=true

@@ -1,0 +1,52 @@
+---
+- name: install icinga2
+  yum: pkg={{item}} state=latest
+  with_items:
+  - icinga2-ido-mysql
+  - php-mysql
+  - php-ldap
+  - icingaweb2
+  - icingacli
+
+- name: install database icinga
+  mysql_db: name=icinga state=present
+
+- name: install mysqluser icinga
+  mysql_user: name=icinga password=icinga priv=*.*:ALL state=present
+
+- name: import sql
+  mysql_db: name=icinga state=import target=/usr/share/icinga2-ido-mysql/schema/mysql.sql
+  
+- name: enable icinga2 ido-mysql
+  command: icinga2 feature enable ido-mysql
+
+- name: enable icinga2 command
+  command: icinga2 feature enable command
+
+- name: adding in group icingaadm
+  user: name=icingacmd group=apache
+
+- name: adding in group icinga
+  user: name=icingacmd group=apache
+
+- name: restart ici2
+  service: name=icinga2 state=restarted
+
+- name: edit php.ini file
+  replace:
+       dest=/etc/php.ini
+       regexp=';date.timezone ='
+       replace='date.timezone = Europe/Brussels/'
+       backup=yes
+ 
+- selinux: state=disabled
+
+- name: restart ap
+  service: name=httpd state=restarted
+
+- name: setup token create
+  command: icingacli setup token create
+  register: token
+
+- name: Icinga Web UI Installation finished (RH)
+  debug: msg="Login at http://192.168.33.10/icingaweb2 with {{ token.stdout }}"
